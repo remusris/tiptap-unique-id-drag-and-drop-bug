@@ -1,86 +1,106 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { useState } from 'react'
+import CustomUuidEditor from '../components/tiptap-editor-with-custom-uuid'
+import TiptapEditor from '../components/tiptap-editor'
+import { cn } from '../lib/utils'
 
 export const Route = createFileRoute('/')({ component: App })
 
+const editorTabs = {
+  builtIn: {
+    label: 'Built-in UniqueId',
+    summary: 'Uses @tiptap/extension-unique-id',
+    description:
+      'Baseline behavior with Tiptap’s official UniqueId extension.',
+    Component: TiptapEditor,
+  },
+  customUuid: {
+    label: 'Custom UUID Extension',
+    summary: 'Uses the repo custom unique-id extension',
+    description:
+      'Compare the same drag-and-drop flow against the local UUID implementation.',
+    Component: CustomUuidEditor,
+  },
+} as const
+
+type EditorTabKey = keyof typeof editorTabs
+
+const editorTabOrder: EditorTabKey[] = ['builtIn', 'customUuid']
+
 function App() {
+  const [activeTab, setActiveTab] = useState<EditorTabKey>('builtIn')
+  const activeEditor = editorTabs[activeTab]
+  const ActiveEditor = activeEditor.Component
+
   return (
     <main className="page-wrap px-4 pb-8 pt-14">
-      <section className="island-shell rise-in relative overflow-hidden rounded-[2rem] px-6 py-10 sm:px-10 sm:py-14">
-        <div className="pointer-events-none absolute -left-20 -top-24 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(79,184,178,0.32),transparent_66%)]" />
-        <div className="pointer-events-none absolute -bottom-20 -right-20 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(47,106,74,0.18),transparent_66%)]" />
-        <p className="island-kicker mb-3">TanStack Start Base Template</p>
-        <h1 className="display-title mb-5 max-w-3xl text-4xl leading-[1.02] font-bold tracking-tight text-[var(--sea-ink)] sm:text-6xl">
-          Start simple, ship quickly.
-        </h1>
-        <p className="mb-8 max-w-2xl text-base text-[var(--sea-ink-soft)] sm:text-lg">
-          This base starter intentionally keeps things light: two routes, clean
-          structure, and the essentials you need to build from scratch.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <a
-            href="/about"
-            className="rounded-full border border-[rgba(50,143,151,0.3)] bg-[rgba(79,184,178,0.14)] px-5 py-2.5 text-sm font-semibold text-[var(--lagoon-deep)] no-underline transition hover:-translate-y-0.5 hover:bg-[rgba(79,184,178,0.24)]"
+      <section className="island-shell rise-in rounded-[2rem] px-5 py-6 sm:px-7 sm:py-7">
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <p className="island-kicker mb-3">Editor Comparison</p>
+              <h1 className="display-title text-4xl font-semibold tracking-tight text-[var(--sea-ink)] sm:text-5xl">
+                Switch between both Tiptap editors
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--sea-ink-soft)] sm:text-base">
+                Use the tabs below to compare drag-and-drop behavior between
+                the stock UniqueId extension and the custom UUID extension in
+                this repo.
+              </p>
+            </div>
+
+            <div className="rounded-[1.25rem] border border-[var(--line)] bg-[rgba(255,255,255,0.55)] px-4 py-3 text-sm text-[var(--sea-ink-soft)] shadow-[0_12px_28px_rgba(23,58,64,0.08)] backdrop-blur-sm">
+              <div className="font-semibold text-[var(--sea-ink)]">
+                Active extension
+              </div>
+              <div className="mt-1">{activeEditor.summary}</div>
+            </div>
+          </div>
+
+          <div
+            className="grid gap-3 md:grid-cols-2"
+            role="tablist"
+            aria-label="Choose a Tiptap editor"
           >
-            About This Starter
-          </a>
-          <a
-            href="https://tanstack.com/router"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full border border-[rgba(23,58,64,0.2)] bg-white/50 px-5 py-2.5 text-sm font-semibold text-[var(--sea-ink)] no-underline transition hover:-translate-y-0.5 hover:border-[rgba(23,58,64,0.35)]"
+            {editorTabOrder.map((tabKey) => {
+              const tab = editorTabs[tabKey]
+              const isActive = tabKey === activeTab
+
+              return (
+                <button
+                  key={tabKey}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls={`editor-panel-${tabKey}`}
+                  id={`editor-tab-${tabKey}`}
+                  onClick={() => setActiveTab(tabKey)}
+                  className={cn(
+                    'rounded-[1.5rem] border px-4 py-4 text-left backdrop-blur-sm transition hover:-translate-y-px',
+                    isActive
+                      ? 'border-[var(--lagoon-deep)] bg-[rgba(79,184,178,0.12)] text-[var(--sea-ink)] shadow-[0_16px_32px_rgba(23,58,64,0.1)]'
+                      : 'border-[var(--line)] bg-[rgba(255,255,255,0.52)] text-[var(--sea-ink-soft)] hover:border-[rgba(50,143,151,0.34)] hover:bg-[rgba(255,255,255,0.74)]',
+                  )}
+                >
+                  <div className="text-sm font-semibold">{tab.label}</div>
+                  <div className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--kicker)]">
+                    {tab.summary}
+                  </div>
+                  <p className="mt-3 text-sm leading-6">{tab.description}</p>
+                </button>
+              )
+            })}
+          </div>
+
+          <div
+            id={`editor-panel-${activeTab}`}
+            role="tabpanel"
+            aria-labelledby={`editor-tab-${activeTab}`}
+            className="rounded-[1.75rem] border border-[var(--line)] bg-[rgba(255,255,255,0.36)] p-3 sm:p-4"
           >
-            Router Guide
-          </a>
+            <ActiveEditor />
+          </div>
         </div>
-      </section>
-
-      <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          [
-            'Type-Safe Routing',
-            'Routes and links stay in sync across every page.',
-          ],
-          [
-            'Server Functions',
-            'Call server code from your UI without creating API boilerplate.',
-          ],
-          [
-            'Streaming by Default',
-            'Ship progressively rendered responses for faster experiences.',
-          ],
-          [
-            'Tailwind Native',
-            'Design quickly with utility-first styling and reusable tokens.',
-          ],
-        ].map(([title, desc], index) => (
-          <article
-            key={title}
-            className="island-shell feature-card rise-in rounded-2xl p-5"
-            style={{ animationDelay: `${index * 90 + 80}ms` }}
-          >
-            <h2 className="mb-2 text-base font-semibold text-[var(--sea-ink)]">
-              {title}
-            </h2>
-            <p className="m-0 text-sm text-[var(--sea-ink-soft)]">{desc}</p>
-          </article>
-        ))}
-      </section>
-
-      <section className="island-shell mt-8 rounded-2xl p-6">
-        <p className="island-kicker mb-2">Quick Start</p>
-        <ul className="m-0 list-disc space-y-2 pl-5 text-sm text-[var(--sea-ink-soft)]">
-          <li>
-            Edit <code>src/routes/index.tsx</code> to customize the home page.
-          </li>
-          <li>
-            Update <code>src/components/Header.tsx</code> and{' '}
-            <code>src/components/Footer.tsx</code> for brand links.
-          </li>
-          <li>
-            Add routes in <code>src/routes</code> and tweak visual tokens in{' '}
-            <code>src/styles.css</code>.
-          </li>
-        </ul>
       </section>
     </main>
   )
